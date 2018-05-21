@@ -1,0 +1,39 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: create-vol-from-backup-snap
+#  namespace: dev
+spec:
+  #schedule: "00 04 * * 0"  #4:00am Sundays
+  schedule: "*/10 * * * *"  # each 10 Minutes (for debugging)
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 5
+      activeDeadlineSeconds: 7200  # 2 Hours
+      template:
+        spec:
+          serviceAccountName: volume-manager-account
+          automountServiceAccountToken: true
+          containers:
+          - name: boto3-snaps
+            image: devopz/snapz:4
+            imagePullPolicy: Always
+            env:
+            - name: AWS_ACCESS_KEY_ID
+              value: 'XXXXXXXXXXX'
+            - name: AWS_SECRET_ACCESS_KEY
+              value: 'XXXXXXXXX'
+            - name: AWS_DEFAULT_REGION
+              value: 'us-west-2'
+            - name: SNAPSHOT_OWNER_ID
+              value: '346766516733'
+            - name: VOLUME_AVAILABILITY_ZONE
+              value: 'us-west-2b'
+            - name: DEBUG
+              value: '1'
+            - name: SNAPSHOT_OLDER_THAN_N_DAYS
+              value: '165'
+          restartPolicy: Never
